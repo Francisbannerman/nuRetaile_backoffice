@@ -80,6 +80,7 @@
         </div>
 
         <!-- Create/Edit Modal -->
+        <!-- Create/Edit Modal -->
         <Modal :isOpen="showModal" :title="modalTitle" @close="closeModal">
           <form @submit.prevent="handleSubmit" class="form">
             <div class="form-group">
@@ -121,16 +122,95 @@
               </select>
             </div>
 
+            <!-- Default Image Upload -->
             <div class="form-group">
-              <label>Default Image URL *</label>
-              <input v-model="formData.defaultImage" type="text" required />
+              <label>Default Image *</label>
+              <div class="image-upload-container">
+                <input 
+                  type="file" 
+                  @change="handleImageUpload($event, 'defaultImage')" 
+                  accept="image/*"
+                  :required="!formData.defaultImage && !editMode"
+                  ref="defaultImageInput"
+                />
+                
+                <!-- Image Preview -->
+                <div v-if="imagePreviews.defaultImage" class="image-preview">
+                  <img :src="imagePreviews.defaultImage" alt="Default Image Preview" />
+                  <button 
+                    type="button" 
+                    @click="removeImage('defaultImage')" 
+                    class="remove-image-btn"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
             </div>
 
+            <!-- Additional Images Upload -->
             <div class="form-group">
               <label>Additional Images</label>
-              <input v-model="formData.image1" type="text" placeholder="Image 1 URL" />
-              <input v-model="formData.image2" type="text" placeholder="Image 2 URL" class="mt-2" />
-              <input v-model="formData.image3" type="text" placeholder="Image 3 URL" class="mt-2" />
+              
+              <!-- Image 1 -->
+              <div class="image-upload-container mt-2">
+                <input 
+                  type="file" 
+                  @change="handleImageUpload($event, 'image1')" 
+                  accept="image/*"
+                  ref="image1Input"
+                />
+                <div v-if="imagePreviews.image1" class="image-preview">
+                  <img :src="imagePreviews.image1" alt="Image 1 Preview" />
+                  <button 
+                    type="button" 
+                    @click="removeImage('image1')" 
+                    class="remove-image-btn"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+
+              <!-- Image 2 -->
+              <div class="image-upload-container mt-2">
+                <input 
+                  type="file" 
+                  @change="handleImageUpload($event, 'image2')" 
+                  accept="image/*"
+                  ref="image2Input"
+                />
+                <div v-if="imagePreviews.image2" class="image-preview">
+                  <img :src="imagePreviews.image2" alt="Image 2 Preview" />
+                  <button 
+                    type="button" 
+                    @click="removeImage('image2')" 
+                    class="remove-image-btn"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+
+              <!-- Image 3 -->
+              <div class="image-upload-container mt-2">
+                <input 
+                  type="file" 
+                  @change="handleImageUpload($event, 'image3')" 
+                  accept="image/*"
+                  ref="image3Input"
+                />
+                <div v-if="imagePreviews.image3" class="image-preview">
+                  <img :src="imagePreviews.image3" alt="Image 3 Preview" />
+                  <button 
+                    type="button" 
+                    @click="removeImage('image3')" 
+                    class="remove-image-btn"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div class="form-row">
@@ -324,6 +404,27 @@ const editMode = ref(false)
 const submitting = ref(false)
 const viewingProduct = ref(null)
 
+// ✅ Image handling
+const imageFiles = ref({
+  defaultImage: null,
+  image1: null,
+  image2: null,
+  image3: null
+})
+
+const imagePreviews = ref({
+  defaultImage: null,
+  image1: null,
+  image2: null,
+  image3: null
+})
+
+// ✅ Refs for file inputs
+const defaultImageInput = ref(null)
+const image1Input = ref(null)
+const image2Input = ref(null)
+const image3Input = ref(null)
+
 const formData = ref({
   productId: null,
   productName: '',
@@ -375,6 +476,114 @@ function getCategoryName(categoryId) {
   return category?.categoryName || 'N/A'
 }
 
+// ✅ Handle image file selection
+function handleImageUpload(event, imageKey) {
+  const file = event.target.files[0]
+  
+  if (!file) return
+
+  // Validate file type
+  if (!file.type.startsWith('image/')) {
+    alert('Please select a valid image file')
+    return
+  }
+
+  // Validate file size (e.g., 5MB max)
+  const maxSize = 5 * 1024 * 1024 // 5MB
+  if (file.size > maxSize) {
+    alert('Image size must be less than 5MB')
+    return
+  }
+
+  // Store the file
+  imageFiles.value[imageKey] = file
+
+  // Create preview URL
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    imagePreviews.value[imageKey] = e.target.result
+    
+    // Also update formData to track that an image exists
+    formData.value[imageKey] = file.name
+  }
+  reader.readAsDataURL(file)
+}
+
+// ✅ Remove image
+function removeImage(imageKey) {
+  imageFiles.value[imageKey] = null
+  imagePreviews.value[imageKey] = null
+  formData.value[imageKey] = ''
+  
+  // Clear the file input
+  const inputRefs = {
+    defaultImage: defaultImageInput,
+    image1: image1Input,
+    image2: image2Input,
+    image3: image3Input
+  }
+  
+  const inputRef = inputRefs[imageKey]
+  if (inputRef?.value) {
+    inputRef.value.value = ''
+  }
+}
+
+// ✅ Handle form submission using productsStore
+async function handleSubmit() {
+  submitting.value = true
+  
+  try {
+    // Create FormData object
+    const formDataToSend = new FormData()
+
+    // Append all form fields
+    formDataToSend.append('productName', formData.value.productName)
+    formDataToSend.append('productDescription', formData.value.productDescription || '')
+    formDataToSend.append('unitPrice', formData.value.unitPrice)
+    formDataToSend.append('sellingPrice', formData.value.sellingPrice)
+    formDataToSend.append('stock', formData.value.stock)
+    formDataToSend.append('categoryId', formData.value.categoryId)
+    formDataToSend.append('weight', formData.value.weight || '')
+    formDataToSend.append('size', formData.value.size || '')
+    formDataToSend.append('brand', formData.value.brand || '')
+    formDataToSend.append('manufacturer', formData.value.manufacturer || '')
+    formDataToSend.append('displayOrder', formData.value.displayOrder || 0)
+    formDataToSend.append('isAvailable', formData.value.isAvailable)
+    formDataToSend.append('isOnHomePage', formData.value.isOnHomePage)
+    formDataToSend.append('hasVariants', formData.value.hasVariants)
+
+    // Append image files
+    if (imageFiles.value.defaultImage) {
+      formDataToSend.append('defaultImage', imageFiles.value.defaultImage)
+    }
+    if (imageFiles.value.image1) {
+      formDataToSend.append('image1', imageFiles.value.image1)
+    }
+    if (imageFiles.value.image2) {
+      formDataToSend.append('image2', imageFiles.value.image2)
+    }
+    if (imageFiles.value.image3) {
+      formDataToSend.append('image3', imageFiles.value.image3)
+    }
+
+    // ✅ Call productsStore methods
+    if (editMode.value) {
+      formDataToSend.append('productId', formData.value.productId)
+      await productsStore.updateProduct(formDataToSend)
+    } else {
+      await productsStore.createProduct(formDataToSend)
+    }
+    await productsStore.fetchProducts()
+
+    closeModal()
+  } catch (error) {
+    alert('Error saving product: ' + error.message)
+  } finally {
+    submitting.value = false
+  }
+}
+
 function openCreateModal() {
   editMode.value = false
   resetForm()
@@ -384,6 +593,13 @@ function openCreateModal() {
 function editProduct(product) {
   editMode.value = true
   formData.value = { ...product }
+  
+  // Load existing images as previews
+  imagePreviews.value.defaultImage = product.defaultImage || null
+  imagePreviews.value.image1 = product.image1 || null
+  imagePreviews.value.image2 = product.image2 || null
+  imagePreviews.value.image3 = product.image3 || null
+  
   showModal.value = true
 }
 
@@ -424,27 +640,19 @@ function resetForm() {
     isOnHomePage: false,
     hasVariants: false
   }
-}
-
-async function handleSubmit() {
-  submitting.value = true
-  try {
-    if (editMode.value) {
-      await productsStore.updateProduct(formData.value)
-    } else {
-      const newProduct = {
-        ...formData.value,
-        productId: crypto.randomUUID(),
-        dateAdded: new Date().toISOString(),
-        lastUpdatedAt: new Date().toISOString()
-      }
-      await productsStore.createProduct(newProduct)
-    }
-    closeModal()
-  } catch (error) {
-    alert('Error saving product: ' + error.message)
-  } finally {
-    submitting.value = false
+  
+  imageFiles.value = {
+    defaultImage: null,
+    image1: null,
+    image2: null,
+    image3: null
+  }
+  
+  imagePreviews.value = {
+    defaultImage: null,
+    image1: null,
+    image2: null,
+    image3: null
   }
 }
 
@@ -804,4 +1012,63 @@ onMounted(async () => {
   font-weight: 500;
   color: #1f2937;
 }
+
+
+
+.image-upload-container {
+  position: relative;
+}
+
+.image-upload-container input[type="file"] {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.image-preview {
+  position: relative;
+  margin-top: 10px;
+  width: 150px;
+  height: 150px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.image-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.remove-image-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: rgba(255, 0, 0, 0.8);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.remove-image-btn:hover {
+  background: rgba(255, 0, 0, 1);
+}
+
+.mt-2 {
+  margin-top: 8px;
+}
+
+
+
 </style>

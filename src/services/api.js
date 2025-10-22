@@ -1,6 +1,8 @@
 import axios from 'axios'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://hammerhead-app-68j7i.ondigitalocean.app/'
+// const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5251/'
+
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -43,8 +45,16 @@ export default {
 
   // Product APIs
   product: {
-    create: (data) => api.post('/api/Product/create', data),
-    update: (data) => api.put('/api/Product/update', data),
+    create: (data) => api.post('/api/Product/create', data, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    }),
+    update: (data) => api.put('/api/Product/update', data, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    }),
     delete: (id) => api.delete(`/api/Product/delete?id=${id}`),
     get: (id) => api.get(`/api/Product/get?id=${id}`),
     getAll: () => api.get('/api/Product/getall')
