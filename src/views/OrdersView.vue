@@ -49,7 +49,7 @@
                 <td><strong>#{{ order.checkoutId?.slice(0, 8) || 'N/A' }}</strong></td>
                 <td>{{ getCustomerName(order) }}</td>
                 <td>{{ order.deliveryLocation || 'N/A' }}</td>
-                <td>{{ formatDate(order.dateOfCheckout) }}</td>
+                <td>{{ formatDate(order.deliveryDate) }}</td>
                 <td>₵{{ getOrderTotal(order) }}</td>
                 <td>
                   <span :class="['badge', getBadgeClass(order.status)]">
@@ -252,7 +252,7 @@ function getStatusText(status) {
   switch(status) {
     case 1: return 'Pending'
     case 2: return 'Processing'
-    case 3: return 'Shipped'
+    case 3: return 'Dispatched'
     case 4: return 'Delivered'
     case 5: return 'Completed'
     default: return 'Unknown'

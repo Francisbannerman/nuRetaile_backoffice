@@ -25,7 +25,7 @@
           <table class="data-table">
             <thead>
               <tr>
-                <th>Image</th>
+                <!-- <th>Image</th> -->
                 <th>Name</th>
                 <th>Display Order</th>
                 <th>Status</th>
@@ -34,13 +34,13 @@
             </thead>
             <tbody>
               <tr v-for="cat in filteredCategories" :key="cat.categoryId">
-                <td>
+                <!-- <td>
                   <img 
                     :src="cat.categoryImage || '/placeholder.png'" 
                     :alt="cat.categoryName"
                     class="category-image"
                   />
-                </td>
+                </td> -->
                 <td>{{ cat.categoryName }}</td>
                 <td>{{ cat.displayOrder || '—' }}</td>
                 <td>
@@ -74,10 +74,10 @@
               <input v-model="formData.categoryName" type="text" required />
             </div>
 
-            <div class="form-group">
+            <!-- <div class="form-group">
               <label>Category Image URL</label>
               <input v-model="formData.categoryImage" type="text" placeholder="https://example.com/image.jpg" />
-            </div>
+            </div> -->
 
             <div class="form-group">
               <label>Display Order</label>
